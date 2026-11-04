@@ -11,9 +11,11 @@
 - Ranking das casas da melhor para a pior, com "você recebe", a taxa e quanto ganha a mais que a pior.
 - Real, guarani, dólar e peso argentino, em qualquer direção (⇄ inverte).
 - Filtro por cidade: Ciudad del Este / Foz do Iguaçu.
-- **Propaganda**: cartão "Patrocinado" no topo e selo "Parceiro" nas casas parceiras. O ranking não muda por patrocínio: a melhor taxa continua em 1º (é isso que dá confiança ao usuário).
+- **Propaganda (as mesmas do UniRideX)**: carrossel de parceiros (Enfermeira Feridas, Serenya Home Care, Doutor Feridas, "Seu negócio aqui") e cartões "Uniformes & Faculdades" (UCP jalecos azuis, UMAX uniformes vermelhos). Edite em `anuncios` no `cambio_casas.json` (tipo `banner` ou `promo`).
+- Cartão "Patrocinado" e selo "Parceiro" nas casas parceiras. O ranking não muda por patrocínio: a melhor taxa continua em 1º (é isso que dá confiança ao usuário).
 - **Cliques contados** (anúncio, WhatsApp, "como chegar"): é o número que você mostra ao vender a parceria (`GET /api/cliques`).
 - **IA**: com as chaves da Oracle no `.env`, a IA explica a tabela em ES/PT/EN usando só os números dela (nunca inventa cotação). Sem IA, responde por regra.
+- **Atendente 3D que fala** (a mesma técnica do StudentMedical/VinaCare: TalkingHead, boca sincronizada com a voz do aparelho). Toque em "Toque para conversar" para ela se apresentar; depois ela fala cada resposta.
 - Voz: microfone (Chrome/Safari) e resposta falada.
 - 3 idiomas: português, espanhol e inglês.
 
@@ -23,6 +25,9 @@
 web/                 site (HTML + JS puro, sem build) — funciona no GitHub Pages
   index.html          tela e estilo
   src/app.js          busca, ranking, anúncios, assistente e voz
+  src/atendente.js    atendente 3D que fala
+  src/talkinghead/    biblioteca TalkingHead (MIT) — igual ao StudentMedical
+  avatars/avaturn.glb avatar 3D
   dados-exemplo.json  cópia dos dados para o modo demo (sem servidor)
 backend/             API Python FastAPI
   app/cambio.py        ranking, leitura da pergunta, IA, cliques

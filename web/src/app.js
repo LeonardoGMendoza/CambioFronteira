@@ -14,6 +14,7 @@ const API = apiUrl().replace(/\/$/, '');
 
 const T = {
   pt: {
+    comecar: '👋 Toque para conversar', carregando: 'Chamando a atendente…', ola: 'Oi! Sou a atendente do CambioFronteira. Me diga quanto quer trocar e eu mostro onde paga mais.', parceiros: 'Parceiros', promos: 'Uniformes & Faculdades',
     titulo: 'Onde trocar dinheiro hoje na fronteira?', subtitulo: 'Compare as casas de câmbio de Ciudad del Este e Foz do Iguaçu e veja qual paga mais.',
     valor: 'Quanto você quer trocar', de: 'Tenho', para: 'Quero', inverter: 'Inverter moedas', todas: 'Todas as cidades',
     exemplo: 'Valores de EXEMPLO: ainda não são cotações reais. Confirme sempre no balcão.',
@@ -28,6 +29,7 @@ const T = {
     avisoEx: ' Atenção: são valores de exemplo, não cotações reais.'
   },
   es: {
+    comecar: '👋 Toca para conversar', carregando: 'Llamando a la asistente…', ola: '¡Hola! Soy la asistente de CambioFronteira. Dime cuánto quieres cambiar y te muestro dónde pagan más.', parceiros: 'Socios', promos: 'Uniformes y Facultades',
     titulo: '¿Dónde cambiar dinero hoy en la frontera?', subtitulo: 'Compara las casas de cambio de Ciudad del Este y Foz do Iguaçu y mira cuál paga más.',
     valor: 'Cuánto quieres cambiar', de: 'Tengo', para: 'Quiero', inverter: 'Invertir monedas', todas: 'Todas las ciudades',
     exemplo: 'Valores de EJEMPLO: todavía no son cotizaciones reales. Confirma siempre en ventanilla.',
@@ -42,6 +44,7 @@ const T = {
     avisoEx: ' Ojo: son valores de ejemplo, no cotizaciones reales.'
   },
   en: {
+    comecar: '👋 Tap to talk', carregando: 'Calling the assistant…', ola: "Hi! I'm the CambioFronteira assistant. Tell me how much you want to exchange and I'll show you where it pays the most.", parceiros: 'Partners', promos: 'Uniforms & Universities',
     titulo: 'Where to exchange money at the border today?', subtitulo: 'Compare exchange houses in Ciudad del Este and Foz do Iguaçu and see which pays the most.',
     valor: 'How much to exchange', de: 'I have', para: 'I want', inverter: 'Swap currencies', todas: 'All cities',
     exemplo: 'SAMPLE values: not real rates yet. Always confirm at the counter.',
@@ -131,15 +134,38 @@ function telaBusca() {
   </section>`;
 }
 
-function anuncioHtml() {
-  const x = t();
-  const ad = (dados.anuncios || []).find(a => a.ativo && (!a.cidade || !busca.cidade || a.cidade === busca.cidade));
-  if (!ad) return '';
+function anuncios(tipo) {
+  return (dados.anuncios || []).filter(a => a.ativo && (a.tipo || 'banner') === tipo && (!a.cidade || !busca.cidade || a.cidade === busca.cidade));
+}
+const txt = (o) => (o && (o[idioma] || o.pt)) || '';
+function linkAnuncio(a) {
   const zap = dados.anuncie && dados.anuncie.whatsapp;
-  const link = ad.link || (zap ? `https://wa.me/${zap}` : '');
-  const corpo = `<span class="tag">${x.patrocinado}</span><span><b>${esc(ad.titulo[idioma] || ad.titulo.pt)}</b><span class="txt">${esc(ad.texto[idioma] || ad.texto.pt)}</span></span>`;
-  return link ? `<a class="anuncio" href="${esc(link)}" target="_blank" rel="noopener sponsored" data-ad="${esc(ad.id)}">${corpo}</a>`
-              : `<div class="anuncio">${corpo}</div>`;
+  return a.link || (a.id === 'anuncie' && zap ? `https://wa.me/${zap}` : '');
+}
+function anuncioHtml() {
+  const x = t(), lista = anuncios('banner');
+  if (!lista.length) return '';
+  const item = (a) => {
+    const cor = a.cor || '#0f8b5f', link = linkAnuncio(a);
+    const corpo = `<span class="ic" style="background:${esc(cor)}">${esc(a.icone || '📣')}</span>
+      <span><span class="tag">${x.patrocinado}</span><b>${esc(txt(a.titulo))}</b><small>${esc(txt(a.texto))}</small></span>`;
+    const estilo = `style="background:${esc(cor)}1a;border-color:${esc(cor)}55"`;
+    return link ? `<a class="parceiro" ${estilo} href="${esc(link)}" target="_blank" rel="noopener sponsored" data-ad="${esc(a.id)}">${corpo}</a>`
+                : `<div class="parceiro" ${estilo}>${corpo}</div>`;
+  };
+  return `<div class="carrossel" id="carrossel" aria-label="${x.parceiros}">${lista.map(item).join('')}</div>`;
+}
+function promosHtml() {
+  const x = t(), lista = anuncios('promo');
+  if (!lista.length) return '';
+  const item = (a) => {
+    const corpo = `<span class="selo-p" style="background:${esc(a.cor || '#0f8b5f')}">${esc(a.selo || '')}</span><b>${esc(txt(a.titulo))}</b><span class="cta">${esc(txt(a.texto))} ›</span>`;
+    const estilo = `style="background-image:url('${esc(a.imagem || '')}')"`;
+    const link = linkAnuncio(a);
+    return link ? `<a class="promo" ${estilo} href="${esc(link)}" target="_blank" rel="noopener sponsored" data-ad="${esc(a.id)}">${corpo}</a>`
+                : `<div class="promo" ${estilo}>${corpo}</div>`;
+  };
+  return `<h2 class="titulo-sec">${x.promos}</h2><div class="promos">${lista.map(item).join('')}</div>`;
 }
 
 function telaResultado() {
@@ -161,7 +187,8 @@ function telaResultado() {
   return `${dados.exemplo ? `<div class="aviso">⚠️ ${x.exemplo}</div>` : ''}
     ${anuncioHtml()}
     ${data ? `<p class="info">${x.atualizado(data)}</p>` : ''}
-    ${lista.length ? `<ol class="lista">${cartoes}</ol>` : `<div class="vazio">${x.nada}</div>`}`;
+    ${lista.length ? `<ol class="lista">${cartoes}</ol>` : `<div class="vazio">${x.nada}</div>`}
+    ${promosHtml()}`;
 }
 
 function telaConversa() {
@@ -171,17 +198,27 @@ function telaConversa() {
 function atualizarResultado() {
   $('#resultado').innerHTML = telaResultado();
   document.querySelectorAll('[data-clique]').forEach(a => a.onclick = () => registrar(a.dataset.clique, a.dataset.id));
-  const ad = document.querySelector('[data-ad]'); if (ad) ad.onclick = () => registrar('anuncio', ad.dataset.ad);
+  document.querySelectorAll('[data-ad]').forEach(ad => ad.onclick = () => registrar('anuncio', ad.dataset.ad));
   gravar('cf.busca', busca);
 }
 
+let timerCarrossel = null;
+function rodarCarrossel() {
+  clearInterval(timerCarrossel);
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  timerCarrossel = setInterval(() => {
+    const c = $('#carrossel'); if (!c || c.matches(':hover')) return;
+    const fimLinha = c.scrollLeft + c.clientWidth >= c.scrollWidth - 4;
+    c.scrollTo({ left: fimLinha ? 0 : c.scrollLeft + c.firstElementChild.offsetWidth + 12, behavior: 'smooth' });
+  }, 4000);
+}
 function render() {
   const x = t();
   document.documentElement.lang = idioma;
   document.querySelectorAll('.idiomas button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.lang === idioma)));
   $('#titulo').textContent = x.titulo; $('#subtitulo').textContent = x.subtitulo; $('#rodape').textContent = x.rodape;
   $('#app').innerHTML = telaBusca();
-  atualizarResultado(); telaConversa(); ligar();
+  atualizarResultado(); telaConversa(); ligar(); rodarCarrossel();
 }
 
 // ---------- assistente ----------
@@ -224,14 +261,41 @@ async function perguntar(texto) {
   falar(resposta);
 }
 
-function falar(texto) {
+// ---------- atendente 3D ----------
+let atendente = null, audioLiberado = false;
+function vozDoIdioma() {
+  const lang = LOCALE[idioma], vozes = ('speechSynthesis' in window) ? speechSynthesis.getVoices() : [];
+  const nota = (v) => (v.lang.replace('_', '-') === lang ? 100 : v.lang.startsWith(lang.slice(0, 2)) ? 60 : 0) + (/female|mulher|mujer|francisca|tania|maria|luciana|paulina|helena|zira|samantha/i.test(v.name) ? 20 : 0) + (/natural|neural|online|premium|enhanced/i.test(v.name) ? 30 : 0);
+  return { lang, voz: vozes.slice().sort((a, b) => nota(b) - nota(a))[0] };
+}
+async function iniciarAtendente() {
+  $('#status').textContent = t().carregando;
+  $('#comecar').hidden = true;
+  try {
+    const { Atendente } = await import('./atendente.js');
+    atendente = new Atendente($('#avatar'));
+    await atendente.carregar();
+    $('#status').textContent = '';
+  } catch (e) {
+    console.warn('atendente 3D indisponível', e);
+    atendente = null; $('#status').textContent = '🤖';
+  }
+  $('#comecar').textContent = t().comecar;
+  $('#comecar').hidden = audioLiberado;
+}
+async function falar(texto) {
+  $('#balao').textContent = texto;
+  const info = { ...vozDoIdioma(), dito: texto.replace(/AR\$ /g, 'pesos ').replace(/US\$ /g, 'dólares ').replace(/R\$ /g, 'reais ').replace(/Gs /g, 'guaranis ') };
+  if (atendente) { atendente.liberarAudio(); return atendente.falar(texto, info); }
   if (!('speechSynthesis' in window)) return;
   speechSynthesis.cancel();
-  const u = new SpeechSynthesisUtterance(texto.replace(/Gs /g, 'guaranis ').replace(/R\$ /g, 'reais ').replace(/US\$ /g, 'dólares '));
-  u.lang = LOCALE[idioma];
-  const voz = speechSynthesis.getVoices().find(v => v.lang.replace('_', '-') === u.lang);
-  if (voz) u.voice = voz;
+  const u = new SpeechSynthesisUtterance(info.dito); u.lang = info.lang; if (info.voz) u.voice = info.voz;
   speechSynthesis.speak(u);
+}
+function liberarAudio() {
+  if (audioLiberado) return;
+  audioLiberado = true; $('#comecar').hidden = true;
+  if (atendente) atendente.liberarAudio();
 }
 
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -243,7 +307,7 @@ function ouvir() {
   $('#mic').dataset.ouvindo = '1';
   rec.onresult = (e) => { const txt = e.results[0][0].transcript; if (txt) perguntar(txt); };
   rec.onend = rec.onerror = () => { rec = null; const m = $('#mic'); if (m) m.dataset.ouvindo = ''; };
-  try { speechSynthesis && speechSynthesis.cancel(); rec.start(); } catch (e) { rec = null; }
+  try { liberarAudio(); if (atendente) atendente.parar(); else if ('speechSynthesis' in window) speechSynthesis.cancel(); rec.start(); } catch (e) { rec = null; }
 }
 
 // ---------- eventos ----------
@@ -253,11 +317,13 @@ function ligar() {
   $('#para').onchange = (e) => { busca.para = e.target.value; if (busca.de === busca.para) busca.de = busca.para === 'PYG' ? 'BRL' : 'PYG'; render(); };
   $('#inverter').onclick = () => { [busca.de, busca.para] = [busca.para, busca.de]; render(); };
   document.querySelectorAll('[data-cidade]').forEach(b => b.onclick = () => { busca.cidade = b.dataset.cidade; render(); });
-  $('#perg').onsubmit = (e) => { e.preventDefault(); const txt = $('#txt').value.trim(); if (txt) { $('#txt').value = ''; perguntar(txt); } };
+  $('#perg').onsubmit = (e) => { e.preventDefault(); liberarAudio(); const txt = $('#txt').value.trim(); if (txt) { $('#txt').value = ''; perguntar(txt); } };
   $('#mic').onclick = ouvir;
 }
-document.querySelectorAll('.idiomas button').forEach(b => b.onclick = () => { idioma = b.dataset.lang; gravar('cf.idioma', idioma); render(); });
+document.querySelectorAll('.idiomas button').forEach(b => b.onclick = () => { idioma = b.dataset.lang; gravar('cf.idioma', idioma); render(); if (!audioLiberado) $('#comecar').textContent = t().comecar; });
+$('#comecar').onclick = () => { liberarAudio(); if (atendente) atendente.acenar(); falar(t().ola); };
 
 await carregar();
+iniciarAtendente();
 if (!online) conversa.push({ quem: 'bot', chave: 'demo' });
 render();
