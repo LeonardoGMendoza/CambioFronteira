@@ -125,15 +125,7 @@ function telaBusca() {
     <button type="button" class="chip" data-cidade="" aria-pressed="${!busca.cidade}">${x.todas}</button>
     ${cidades().map(c => `<button type="button" class="chip" data-cidade="${esc(c)}" aria-pressed="${busca.cidade === c}">${esc(c)}</button>`).join('')}
   </div>
-  <div id="resultado"></div>
-  <section class="ia" aria-labelledby="iaTit">
-    <h2 id="iaTit">🤖 ${x.iaTitulo}</h2><p class="sub">${x.iaSub}</p>
-    <div class="conversa" id="conversa" aria-live="polite"></div>
-    <form class="perg" id="perg">
-      <input id="txt" type="text" placeholder="${esc(x.placeholder)}" autocomplete="off" required>
-      <button class="btn prim" type="submit">${x.enviar}</button>
-    </form>
-  </section>`;
+  <div id="resultado"></div>`;
 }
 
 function anuncios(tipo) {
@@ -194,6 +186,7 @@ function telaResultado() {
 }
 
 function telaConversa() {
+  if (!$('#conversa')) return;
   $('#conversa').innerHTML = conversa.map(m => `<div class="msg ${m.quem}">${esc(m.chave ? t()[m.chave] : m.texto)}</div>`).join('');
 }
 
@@ -248,7 +241,7 @@ function respostaLocal(texto) {
 
 async function perguntar(texto) {
   const x = t();
-  conversa.push({ quem: 'eu', texto }, { quem: 'bot', texto: x.pensando }); telaConversa();
+  $('#balao').textContent = '🎤 ' + texto + ' · ' + x.pensando;
   let resposta = null;
   if (online) {
     try {
@@ -257,10 +250,7 @@ async function perguntar(texto) {
     } catch (e) { /* cai na resposta local */ }
   }
   if (!resposta) resposta = respostaLocal(texto);
-  conversa[conversa.length - 1].texto = resposta;
-  const foco = document.activeElement && document.activeElement.id;
   render();
-  if (foco === 'txt') $('#txt').focus();
   falar(resposta);
 }
 
@@ -304,7 +294,7 @@ function liberarAudio() {
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
 let rec = null;
 function ouvir() {
-  if (!SR) { conversa.push({ quem: 'bot', chave: 'semMic' }); telaConversa(); return; }
+  if (!SR) { $('#balao').textContent = t().semMic; return; }
   if (rec) { rec.stop(); return; }
   rec = new SR(); rec.lang = LOCALE[idioma]; rec.interimResults = false;
   $('#mic').dataset.ouvindo = '1'; $('#dicaVoz').textContent = t().ouvindo;
@@ -320,7 +310,6 @@ function ligar() {
   $('#para').onchange = (e) => { busca.para = e.target.value; if (busca.de === busca.para) busca.de = busca.para === 'PYG' ? 'BRL' : 'PYG'; render(); };
   $('#inverter').onclick = () => { [busca.de, busca.para] = [busca.para, busca.de]; render(); };
   document.querySelectorAll('[data-cidade]').forEach(b => b.onclick = () => { busca.cidade = b.dataset.cidade; render(); });
-  $('#perg').onsubmit = (e) => { e.preventDefault(); liberarAudio(); const txt = $('#txt').value.trim(); if (txt) { $('#txt').value = ''; perguntar(txt); } };
   $('#mic').onclick = ouvir;
 }
 document.querySelectorAll('.idiomas button').forEach(b => b.onclick = () => { idioma = b.dataset.lang; gravar('cf.idioma', idioma); render(); if (!audioLiberado) $('#comecar').textContent = t().comecar; });
@@ -328,5 +317,4 @@ $('#comecar').onclick = () => { liberarAudio(); if (atendente) atendente.acenar(
 
 await carregar();
 iniciarAtendente();
-if (!online) conversa.push({ quem: 'bot', chave: 'demo' });
 render();
