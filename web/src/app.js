@@ -14,6 +14,7 @@ const API = apiUrl().replace(/\/$/, '');
 
 const T = {
   pt: {
+    tocarFalar: 'Toque e fale', ouvindo: 'Estou ouvindo…', 
     comecar: '👋 Toque para conversar', carregando: 'Chamando a atendente…', ola: 'Oi! Sou a atendente do CambioFronteira. Me diga quanto quer trocar e eu mostro onde paga mais.', parceiros: 'Parceiros', promos: 'Uniformes & Faculdades',
     titulo: 'Onde trocar dinheiro hoje na fronteira?', subtitulo: 'Compare as casas de câmbio de Ciudad del Este e Foz do Iguaçu e veja qual paga mais.',
     valor: 'Quanto você quer trocar', de: 'Tenho', para: 'Quero', inverter: 'Inverter moedas', todas: 'Todas as cidades',
@@ -29,6 +30,7 @@ const T = {
     avisoEx: ' Atenção: são valores de exemplo, não cotações reais.'
   },
   es: {
+    tocarFalar: 'Toca y habla', ouvindo: 'Te escucho…', 
     comecar: '👋 Toca para conversar', carregando: 'Llamando a la asistente…', ola: '¡Hola! Soy la asistente de CambioFronteira. Dime cuánto quieres cambiar y te muestro dónde pagan más.', parceiros: 'Socios', promos: 'Uniformes y Facultades',
     titulo: '¿Dónde cambiar dinero hoy en la frontera?', subtitulo: 'Compara las casas de cambio de Ciudad del Este y Foz do Iguaçu y mira cuál paga más.',
     valor: 'Cuánto quieres cambiar', de: 'Tengo', para: 'Quiero', inverter: 'Invertir monedas', todas: 'Todas las ciudades',
@@ -44,6 +46,7 @@ const T = {
     avisoEx: ' Ojo: son valores de ejemplo, no cotizaciones reales.'
   },
   en: {
+    tocarFalar: 'Tap and speak', ouvindo: "I'm listening…", 
     comecar: '👋 Tap to talk', carregando: 'Calling the assistant…', ola: "Hi! I'm the CambioFronteira assistant. Tell me how much you want to exchange and I'll show you where it pays the most.", parceiros: 'Partners', promos: 'Uniforms & Universities',
     titulo: 'Where to exchange money at the border today?', subtitulo: 'Compare exchange houses in Ciudad del Este and Foz do Iguaçu and see which pays the most.',
     valor: 'How much to exchange', de: 'I have', para: 'I want', inverter: 'Swap currencies', todas: 'All cities',
@@ -127,7 +130,6 @@ function telaBusca() {
     <h2 id="iaTit">🤖 ${x.iaTitulo}</h2><p class="sub">${x.iaSub}</p>
     <div class="conversa" id="conversa" aria-live="polite"></div>
     <form class="perg" id="perg">
-      <button type="button" class="mic" id="mic" aria-label="${x.falar}">🎤</button>
       <input id="txt" type="text" placeholder="${esc(x.placeholder)}" autocomplete="off" required>
       <button class="btn prim" type="submit">${x.enviar}</button>
     </form>
@@ -216,6 +218,7 @@ function render() {
   const x = t();
   document.documentElement.lang = idioma;
   document.querySelectorAll('.idiomas button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.lang === idioma)));
+  $('#mic').setAttribute('aria-label', x.falar); $('#dicaVoz').textContent = rec ? x.ouvindo : x.tocarFalar;
   $('#titulo').textContent = x.titulo; $('#subtitulo').textContent = x.subtitulo; $('#rodape').textContent = x.rodape;
   $('#app').innerHTML = telaBusca();
   atualizarResultado(); telaConversa(); ligar(); rodarCarrossel();
@@ -304,9 +307,9 @@ function ouvir() {
   if (!SR) { conversa.push({ quem: 'bot', chave: 'semMic' }); telaConversa(); return; }
   if (rec) { rec.stop(); return; }
   rec = new SR(); rec.lang = LOCALE[idioma]; rec.interimResults = false;
-  $('#mic').dataset.ouvindo = '1';
+  $('#mic').dataset.ouvindo = '1'; $('#dicaVoz').textContent = t().ouvindo;
   rec.onresult = (e) => { const txt = e.results[0][0].transcript; if (txt) perguntar(txt); };
-  rec.onend = rec.onerror = () => { rec = null; const m = $('#mic'); if (m) m.dataset.ouvindo = ''; };
+  rec.onend = rec.onerror = () => { rec = null; $('#mic').dataset.ouvindo = ''; $('#dicaVoz').textContent = t().tocarFalar; };
   try { liberarAudio(); if (atendente) atendente.parar(); else if ('speechSynthesis' in window) speechSynthesis.cancel(); rec.start(); } catch (e) { rec = null; }
 }
 
