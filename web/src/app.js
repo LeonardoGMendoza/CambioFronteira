@@ -88,7 +88,7 @@ async function carregar() {
       if (r.ok) { dados = await r.json(); online = true; return; }
     } catch (e) { /* sem servidor: usa o exemplo */ }
   }
-  dados = await (await fetch('./dados-exemplo.json')).json();
+  dados = await (await fetch('./dados-exemplo.json', { cache: 'no-cache' })).json();
 }
 
 // mesmo cálculo do servidor (backend/app/cambio.py)
@@ -265,7 +265,7 @@ async function iniciarAtendente() {
   $('#status').textContent = t().carregando;
   $('#comecar').hidden = true;
   try {
-    const { Atendente } = await import('./atendente.js');
+    const { Atendente } = await import('./atendente.js?v=4');
     atendente = new Atendente($('#avatar'));
     await atendente.carregar();
     $('#status').textContent = '';
