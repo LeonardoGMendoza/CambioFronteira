@@ -279,10 +279,12 @@ async function iniciarAtendente() {
 async function falar(texto) {
   $('#balao').textContent = texto;
   const info = { ...vozDoIdioma(), dito: texto.replace(/AR\$ /g, 'pesos ').replace(/US\$ /g, 'dólares ').replace(/R\$ /g, 'reais ').replace(/Gs /g, 'guaranis ') };
+  modoSom('playback');
   if (atendente) { atendente.liberarAudio(); return atendente.falar(texto, info); }
   if (!('speechSynthesis' in window)) return;
   speechSynthesis.cancel();
-  const u = new SpeechSynthesisUtterance(info.dito); u.lang = info.lang; if (info.voz) u.voice = info.voz;
+  modoSom('playback');
+  const u = new SpeechSynthesisUtterance(info.dito); u.lang = info.lang; u.volume = 1; if (info.voz) u.voice = info.voz;
   speechSynthesis.speak(u);
 }
 function liberarAudio() {
@@ -291,6 +293,11 @@ function liberarAudio() {
   if (atendente) atendente.liberarAudio();
 }
 
+// iPhone: depois que o microfone liga, o iOS manda o som para o alto-falante de ligação (baixinho).
+// Igual ao StudentMedical/VinaCare: volta a sessão de áudio para "playback" (alto-falante principal) assim que para de ouvir.
+function modoSom(tipo) { try { if (navigator.audioSession) navigator.audioSession.type = tipo; } catch (e) {} }
+modoSom('playback');
+
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
 let rec = null;
 function ouvir() {
@@ -298,9 +305,9 @@ function ouvir() {
   if (rec) { rec.stop(); return; }
   rec = new SR(); rec.lang = LOCALE[idioma]; rec.interimResults = false;
   $('#mic').dataset.ouvindo = '1'; $('#dicaVoz').textContent = t().ouvindo;
-  rec.onresult = (e) => { const txt = e.results[0][0].transcript; if (txt) perguntar(txt); };
-  rec.onend = rec.onerror = () => { rec = null; $('#mic').dataset.ouvindo = ''; $('#dicaVoz').textContent = t().tocarFalar; };
-  try { liberarAudio(); if (atendente) atendente.parar(); else if ('speechSynthesis' in window) speechSynthesis.cancel(); rec.start(); } catch (e) { rec = null; }
+  rec.onresult = (e) => { modoSom('playback'); const txt = e.results[0][0].transcript; if (txt) perguntar(txt); };
+  rec.onend = rec.onerror = () => { modoSom('playback'); rec = null; $('#mic').dataset.ouvindo = ''; $('#dicaVoz').textContent = t().tocarFalar; };
+  try { liberarAudio(); if (atendente) atendente.parar(); else if ('speechSynthesis' in window) speechSynthesis.cancel(); modoSom('play-and-record'); rec.start(); } catch (e) { rec = null; }
 }
 
 // ---------- eventos ----------

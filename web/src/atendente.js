@@ -66,7 +66,7 @@ export class Atendente {
       if (!('speechSynthesis' in window)) { labios(); setTimeout(acabar, tm.total); return; }
       speechSynthesis.cancel();
       const u = new SpeechSynthesisUtterance(vozInfo.dito || texto);
-      u.lang = vozInfo.lang; u.rate = 0.97;
+      u.lang = vozInfo.lang; u.rate = 0.97; u.volume = 1;
       if (vozInfo.voz) u.voice = vozInfo.voz;
       u.onstart = () => { if (!comecou) { comecou = true; labios(); } };
       u.onend = acabar; u.onerror = acabar;
